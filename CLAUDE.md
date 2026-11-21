@@ -29,7 +29,18 @@ Jeden moduł Gradle `:app`, pakiet `com.cookiedinner.boxanizer` w `app/src/main/
   - `ItemTag`: itemId, name
 - Zdjęcia są zapisywane jako BLOB bezpośrednio w bazie.
 - Migracje: `app/src/main/sqldelight/migrations/1–6.sqm`. Schemat referencyjny to `databases/1.db`, a `verifyMigrations = true`. **Nowa zmiana schematu = nowy plik `7.sqm`, …**
-- Istnieje zaczątek listy zakupów: kolumny `amountToBuy` i `itemAmountToBuy` (migracja 6).
+- Istnieje zaczątek listy zakupów: `BoxItem.amountToBuy` (akcje CONSUME/BUY) z migracji 6. `Item.itemAmountToBuy` jest martwa: nic jej nie zapisuje, a `Item.insert` (INSERT OR REPLACE) przy edycji przedmiotu zeruje ją.
+- `BoxItem.amountRemovedFromBox` to sama liczba wyjętych/pożyczonych sztuk (akcje BORROW/RETURN), bez informacji kto i kiedy.
+- Odczyty są jednorazowe (bez `Flow`), więc ekrany nie odświeżają się same po zmianie danych.
+
+### Ograniczenia modelu ważne dla synchronizacji (analiza z 2026-11-21)
+1. ID to lokalne AUTOINCREMENT, więc między urządzeniami będą kolizje. Potrzebne UUID albo mapowanie. Unikalne `Box.code` też może kolidować.
+2. Usuwanie to twardy `DELETE`, bez znaczników usunięcia.
+3. Brak `updatedAt` i wersji wierszy.
+4. Ilości są zapisywane jako gotowy wynik (read-modify-write w `Database.editItemInBox`), więc przy „ostatni zapis wygrywa” zmiany mogą ginąć. Do rozważenia: zapis operacji/zdarzeń.
+5. Kolejność list opiera się na `rowid` (celowe ponowne wstawianie wiersza). Po synchronizacji trzeba jawnej kolumny do sortowania.
+6. Zdjęcia jako BLOB (JPEG 800 px wysokości, jakość 100) są ciężkie do synchronizacji. Lepiej trzymać je osobno i w bazie mieć tylko odnośnik.
+7. Brak kluczy obcych, kaskady są robione ręcznie w transakcjach.
 - Kopia zapasowa: na razie tylko systemowy backup Androida (`res/xml/backup_rules.xml`, `data_extraction_rules.xml`). Eksport/import w aplikacji: do ustalenia (prawdopodobnie brak).
 
 ## Technologie
@@ -71,10 +82,16 @@ _Aktualizować na koniec każdej sesji._
 - Repozytorium sklonowane do `C:\projekty\Boxanizer`, utworzona gałąź `sync-i-notatki` (z `main` @ `504ade2`).
 - Utworzony ten plik CLAUDE.md.
 - Fork podpięty jako `origin`, oryginał jako `upstream`. Gałąź `sync-i-notatki` wypchnięta na fork.
+- Przeanalizowany obecny model danych (wnioski w sekcji „Dane” wyżej). Kod bez zmian.
 
 **Co w toku:**
-- Nic.
+- Wybór architektury synchronizacji (etap 1). Czeka na odpowiedzi właściciela:
+  - Czy dane zmieniają tylko jego urządzenia, czy kilka osób jednocześnie?
+  - Czy aplikacja ma w pełni działać offline i synchronizować się później?
+  - Gotowa usługa (Firebase/Supabase) czy własny serwer?
+  - Czy zdjęcia mają się synchronizować w pełnej jakości?
 
 **Następny krok:**
-- Ręczna konfiguracja Android Studio (SDK 34) i pierwszy udany `assembleDebug`.
-- Następnie plan etapu 1 (synchronizacja) do akceptacji.
+- Po odpowiedziach: porównanie 2–3 architektur ze zmianami schematu i planem migracji, do akceptacji.
+- Ręczna konfiguracja Android Studio (SDK 34) i pierwszy udany `assembleDebug`. Jeszcze nie zrobione.
+- Właściciel powinien zmienić hasło do GitHuba (wcześniej trafiło do czatu).
