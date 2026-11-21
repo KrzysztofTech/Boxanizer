@@ -67,7 +67,8 @@ Build debug działa (2026-11-21, budowany przez „Run” w Android Studio, APK 
 - Aplikacja **v1.0.2 (versionCode 2), wersja release** pobrana z GitHub Releases kolegi. Podpis jest kluczem kolegi (`b810d190`). Nie jest debuggable, więc `run-as` nie działa. `adb backup` dla targetSdk 34 nie obejmuje danych aplikacji.
 - **Nigdy nie instalować na nim naszych buildów i nie odinstalowywać aplikacji**, bo inny podpis wymaga odinstalowania, a to kasuje dane.
 - **Wniosek:** nasze przyszłe wersje (inny klucz) nie zaktualizują tej aplikacji z zachowaniem danych. Dane trzeba przenieść eksportem i importem albo przez kopię w chmurze Google. Wybór sposobu jest do ustalenia.
-- Usługa kopii zapasowej Androida jest włączona (transport Google).
+- Usługa kopii zapasowej Androida jest włączona (transport Google), ale **kopia w chmurze nie działa**: `bmgr backupnow` zwraca „Size quota exceeded”, bo dane aplikacji mają około 36,8 MB, a limit Auto Backup to 25 MB (głównie zdjęcia BLOB). Przywracanie z chmury i tak sprawdza podpis, więc nie dałoby pliku `.db`.
+- Jedyna pewna droga do pliku bazy: kolega buduje wersję z eksportem bazy, podpisaną swoim kluczem (albo przekazuje klucz).
 
 ## Planowane zmiany (w tej kolejności)
 1. **Synchronizacja stanu między kilkoma urządzeniami przez wspólną bazę.** Technologia (własny serwer, Firebase/Supabase itp.), rozwiązywanie konfliktów i obsługa zdjęć: do ustalenia.
