@@ -5,6 +5,7 @@ import com.cookiedinner.boxanizer.core.api.ApiClient
 import com.cookiedinner.boxanizer.core.api.ReleaseInfo
 import com.cookiedinner.boxanizer.core.database.Database
 import com.cookiedinner.boxanizer.core.database.DatabaseDriverFactory
+import com.cookiedinner.boxanizer.core.models.ExportSummary
 import com.cookiedinner.boxanizer.database.Box
 import com.cookiedinner.boxanizer.database.BoxWithItem
 import com.cookiedinner.boxanizer.database.Item
@@ -13,6 +14,7 @@ import com.cookiedinner.boxanizer.database.ItemTag
 import com.cookiedinner.boxanizer.items.models.ItemAction
 import com.cookiedinner.boxanizer.items.models.ItemForQueryInBox
 import com.cookiedinner.boxanizer.items.models.ItemListType
+import java.io.File
 
 class DataProvider(databaseDriverFactory: DatabaseDriverFactory) {
     private val database = Database(databaseDriverFactory)
@@ -22,6 +24,11 @@ class DataProvider(databaseDriverFactory: DatabaseDriverFactory) {
     suspend fun checkForUpdates(): ReleaseInfo? {
         val releaseInfoList = apiClient.checkForUpdates()
         return releaseInfoList.maxByOrNull { it.name }
+    }
+
+    @Throws(Exception::class)
+    fun exportDatabase(target: File): ExportSummary {
+        return database.exportTo(target)
     }
 
     @Throws(Exception::class)

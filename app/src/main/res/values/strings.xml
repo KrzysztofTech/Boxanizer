@@ -91,4 +91,9 @@
     <string name="change_by">Change by</string>
     <string name="invalid_amount">Invalid amount!</string>
     <string name="confirm">Confirm</string>
+    <string name="data">DATA</string>
+    <string name="export_database">Export database</string>
+    <string name="export_database_description">Save a full copy of all boxes, items and photos to a file</string>
+    <string name="export_database_success">Database exported (boxes: %1$d, items: %2$d)</string>
+    <string name="export_database_failed">Failed to export the database</string>
 </resources>
