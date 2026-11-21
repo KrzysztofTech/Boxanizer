@@ -70,6 +70,8 @@ Build debug działa (2026-11-21, budowany przez „Run” w Android Studio, APK 
 - Usługa kopii zapasowej Androida jest włączona (transport Google), ale **kopia w chmurze nie działa**: `bmgr backupnow` zwraca „Size quota exceeded”, bo dane aplikacji mają około 36,8 MB, a limit Auto Backup to 25 MB (głównie zdjęcia BLOB). Przywracanie z chmury i tak sprawdza podpis, więc nie dałoby pliku `.db`.
 - `adb backup` sprawdzony 2026-11-21: plik pusty (47 B, sam nagłówek), czego można było się spodziewać.
 - Jedyna pewna droga do pliku bazy: kolega buduje wersję z eksportem bazy, podpisaną swoim kluczem (albo przekazuje klucz).
+- **Gałąź `eksport-bazy`** (od `main`, commit `75b8451`, na forku): Ustawienia → Dane → „Eksportuj bazę danych”, wersja v1.0.3. Przetestowana na telefonie testowym: liczby pudełek i przedmiotów się zgadzają, plik to poprawne SQLite z 4 tabelami. Czeka na podpisany build od kolegi.
+- Kopie z telefonów: `C:\projekty\Boxanizer-backup\` (poza repo, nigdy nie commitować). Uwaga: w Git Bash przy ścieżkach telefonu używać `MSYS_NO_PATHCONV=1`.
 
 ## Planowane zmiany (w tej kolejności)
 1. **Synchronizacja stanu między kilkoma urządzeniami przez wspólną bazę.** Technologia (własny serwer, Firebase/Supabase itp.), rozwiązywanie konfliktów i obsługa zdjęć: do ustalenia.
@@ -94,6 +96,9 @@ _Aktualizować na koniec każdej sesji._
 - Przeanalizowany obecny model danych (wnioski w sekcji „Dane” wyżej). Kod bez zmian.
 - Android Studio skonfigurowane (SDK 34), `assembleDebug` przechodzi. Aplikacja działa na testowym telefonie: dodawanie pudełek i skanowanie kodów sprawdzone, a na telefonie są dane testowe.
 - Hasło do GitHuba zmienione.
+- Próby kopii z prawdziwego telefonu (`run-as`, chmura Google, `adb backup`) nieudane. Zrobiona i przetestowana funkcja eksportu na gałęzi `eksport-bazy`.
+
+**Czeka na kolegę:** podpisany build v1.0.3 z gałęzi `eksport-bazy`. Potem instalacja na prawdziwym telefonie i eksport bazy do `Boxanizer-backup\`.
 
 **Co w toku:**
 - Wybór architektury synchronizacji (etap 1). Czeka na odpowiedzi właściciela:
