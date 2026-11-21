@@ -83,6 +83,7 @@ Build debug działa (2026-11-21, budowany przez „Run” w Android Studio, APK 
 - **Przed każdą większą zmianą pokaż plan i poczekaj na zgodę.**
 - **Nie zmieniaj formatu bazy bez kopii zapasowej i migracji danych.** Zmiana schematu wymaga nowego pliku `.sqm`, przejścia `verifySqlDelightMigration` i wcześniejszej kopii danych użytkownika.
 - **Po każdym etapie: commit i push na fork.**
+- **Instalacje programów:** najpierw krótko napisz, co i po co instalujesz. Właściciel potwierdza każdą instalację w oknie uprawnień (reguła `ask` dla `winget install` w `.claude/settings.local.json`, plik lokalny, poza gitem).
 - Remote'y: `origin` to fork https://github.com/KrzysztofTech/Boxanizer.git (tu pushujemy), a `upstream` to oryginał kolegi https://github.com/CookieDinner/Boxanizer.git (tylko fetch, **nigdy push**).
 
 ## Stan prac
