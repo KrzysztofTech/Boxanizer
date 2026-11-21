@@ -62,6 +62,13 @@ adb shell am start -n com.cookiedinner.boxanizer/.MainActivity
 Build release (`assembleRelease`) ma minifikację, a konfiguracja podpisu jest do ustalenia.
 Build debug działa (2026-11-21, budowany przez „Run” w Android Studio, APK w `app\build\intermediates\apk\debug\`). SDK: `C:\Users\tech\AppData\Local\Android\Sdk`, `adb` w `platform-tools\`. Testowy telefon jest podłączony przez USB.
 
+## Telefon z prawdziwymi danymi (sprawdzone 2026-11-21)
+- OnePlus CPH2043, Android 12, adb serial `JBW4BYOVSO6TRW6H`.
+- Aplikacja **v1.0.2 (versionCode 2), wersja release** pobrana z GitHub Releases kolegi. Podpis jest kluczem kolegi (`b810d190`). Nie jest debuggable, więc `run-as` nie działa. `adb backup` dla targetSdk 34 nie obejmuje danych aplikacji.
+- **Nigdy nie instalować na nim naszych buildów i nie odinstalowywać aplikacji**, bo inny podpis wymaga odinstalowania, a to kasuje dane.
+- **Wniosek:** nasze przyszłe wersje (inny klucz) nie zaktualizują tej aplikacji z zachowaniem danych. Dane trzeba przenieść eksportem i importem albo przez kopię w chmurze Google. Wybór sposobu jest do ustalenia.
+- Usługa kopii zapasowej Androida jest włączona (transport Google).
+
 ## Planowane zmiany (w tej kolejności)
 1. **Synchronizacja stanu między kilkoma urządzeniami przez wspólną bazę.** Technologia (własny serwer, Firebase/Supabase itp.), rozwiązywanie konfliktów i obsługa zdjęć: do ustalenia.
 2. **Notatki o wypożyczeniach przypisane do pudełka:** zdjęcie osoby, data, co zostało pożyczone. Szczegółowy model danych (np. data zwrotu): do ustalenia.
