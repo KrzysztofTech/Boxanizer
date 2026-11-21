@@ -96,4 +96,17 @@
     <string name="export_database_description">Zapisz do pliku pełną kopię wszystkich pudełek, przedmiotów i zdjęć</string>
     <string name="export_database_success">Wyeksportowano bazę (pudełka: %1$d, przedmioty: %2$d)</string>
     <string name="export_database_failed">Nie udało się wyeksportować bazy</string>
+    <string name="cancel">Anuluj</string>
+    <string name="import_database">Importuj bazę danych</string>
+    <string name="import_database_description">Zastąp wszystkie dane plikiem z wcześniejszego eksportu</string>
+    <string name="import_confirm_title">Zastąpić wszystkie dane?</string>
+    <string name="import_confirm_message">W pliku: pudełka: %1$d, przedmioty: %2$d, zdjęcia: %3$d.\n\nObecne dane (pudełka: %4$d, przedmioty: %5$d) zostaną zastąpione. Kopia obecnych danych zostanie zapisana automatycznie.</string>
+    <string name="import_action">Importuj</string>
+    <string name="import_in_progress">Importowanie…</string>
+    <string name="import_database_success">Zaimportowano bazę (pudełka: %1$d, przedmioty: %2$d)</string>
+    <string name="import_database_failed">Import nie powiódł się, obecne dane nie zostały zmienione</string>
+    <string name="import_error_not_a_database">Wybrany plik nie jest bazą Boxanizera</string>
+    <string name="import_error_corrupted">Plik bazy jest uszkodzony</string>
+    <string name="import_error_newer_version">Plik pochodzi z nowszej wersji aplikacji</string>
+    <string name="import_error_not_enough_space">Za mało wolnego miejsca na urządzeniu</string>
 </resources>

@@ -6,3 +6,8 @@ CREATE TABLE BoxItem (
     amountToBuy INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (boxId, itemId)
 );
+deleteAll:
+DELETE FROM BoxItem;
+
+importRow:
+INSERT INTO BoxItem(boxId, itemId, amountInBox, amountRemovedFromBox, amountToBuy) VALUES (?, ?, ?, ?, ?);

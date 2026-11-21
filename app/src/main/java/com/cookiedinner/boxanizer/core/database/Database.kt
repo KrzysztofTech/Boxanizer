@@ -5,6 +5,7 @@ import android.os.Build
 import app.cash.sqldelight.Query
 import app.cash.sqldelight.db.QueryResult
 import app.cash.sqldelight.db.SqlDriver
+import com.cookiedinner.boxanizer.core.models.DataCounts
 import com.cookiedinner.boxanizer.core.models.ExportSummary
 import com.cookiedinner.boxanizer.database.Box
 import com.cookiedinner.boxanizer.database.BoxWithItem
@@ -23,6 +24,7 @@ class Database(databaseDriverFactory: DatabaseDriverFactory) {
     private val boxQueries = database.boxQueries
     private val itemQueries = database.itemQueries
     private val itemTagQueries = database.itemTagQueries
+    private val boxItemQueries = database.boxItemQueries
 
     /**
      * Writes a consistent, standalone copy of the whole database into [target]
@@ -66,6 +68,81 @@ class Database(databaseDriverFactory: DatabaseDriverFactory) {
             }
             return ExportSummary(boxes = count("Box"), items = count("Item"))
         }
+    }
+
+    fun currentCounts(): DataCounts =
+        driver.executeQuery(null, DatabaseImporter.COUNTS_SQL, { cursor ->
+            cursor.next()
+            QueryResult.Value(
+                DataCounts(
+                    boxes = cursor.getLong(0) ?: 0,
+                    items = cursor.getLong(1) ?: 0,
+                    boxItems = cursor.getLong(2) ?: 0,
+                    tags = cursor.getLong(3) ?: 0,
+                    photos = cursor.getLong(4) ?: 0
+                )
+            )
+        }, 0).value
+
+    /**
+     * Replaces ALL data with the contents of [source] in a single transaction, keeping the original
+     * IDs and row order (lists are sorted by rowid). If anything fails, or the row counts afterwards
+     * do not match the source, the transaction is rolled back and the current data stays untouched.
+     */
+    @Throws(Exception::class)
+    fun replaceAllWith(source: SQLiteDatabase): DataCounts {
+        val expected = DatabaseImporter.countsOf(source)
+        database.transaction {
+            itemTagQueries.deleteAll()
+            boxItemQueries.deleteAll()
+            itemQueries.deleteAll()
+            boxQueries.deleteAll()
+
+            DatabaseImporter.queryWithLargeRows(
+                source, "SELECT id, code, name, description, image FROM Box ORDER BY rowid"
+            ).use { c ->
+                while (c.moveToNext()) {
+                    boxQueries.importRow(
+                        c.getLong(0),
+                        c.getString(1),
+                        c.getString(2),
+                        if (c.isNull(3)) null else c.getString(3),
+                        if (c.isNull(4)) null else c.getBlob(4)
+                    )
+                }
+            }
+            DatabaseImporter.queryWithLargeRows(
+                source, "SELECT id, name, description, image, consumable, itemAmountToBuy FROM Item ORDER BY rowid"
+            ).use { c ->
+                while (c.moveToNext()) {
+                    itemQueries.importRow(
+                        c.getLong(0),
+                        c.getString(1),
+                        if (c.isNull(2)) null else c.getString(2),
+                        if (c.isNull(3)) null else c.getBlob(3),
+                        c.getLong(4) != 0L,
+                        c.getLong(5)
+                    )
+                }
+            }
+            source.rawQuery(
+                "SELECT boxId, itemId, amountInBox, amountRemovedFromBox, amountToBuy FROM BoxItem ORDER BY rowid", null
+            ).use { c ->
+                while (c.moveToNext()) {
+                    boxItemQueries.importRow(c.getLong(0), c.getLong(1), c.getLong(2), c.getLong(3), c.getLong(4))
+                }
+            }
+            source.rawQuery("SELECT itemId, name FROM ItemTag ORDER BY rowid", null).use { c ->
+                while (c.moveToNext()) {
+                    itemTagQueries.importRow(c.getLong(0), c.getString(1))
+                }
+            }
+
+            val actual = currentCounts()
+            if (actual != expected)
+                throw Exception("Row counts after import ($actual) do not match the file ($expected)")
+        }
+        return currentCounts()
     }
 
     private fun <T : Any> buildListFromQuery(

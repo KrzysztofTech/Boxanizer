@@ -108,3 +108,8 @@ INSERT OR REPLACE INTO BoxItem VALUES (?, ?, ?, ?, ?);
 editAmountInBox:
 UPDATE BoxItem SET amountInBox = :newAmount
 WHERE itemId = :itemId AND boxId = :boxId;
+deleteAll:
+DELETE FROM Item;
+
+importRow:
+INSERT INTO Item(id, name, description, image, consumable, itemAmountToBuy) VALUES (?, ?, ?, ?, ?, ?);

@@ -5,6 +5,8 @@ import com.cookiedinner.boxanizer.core.api.ApiClient
 import com.cookiedinner.boxanizer.core.api.ReleaseInfo
 import com.cookiedinner.boxanizer.core.database.Database
 import com.cookiedinner.boxanizer.core.database.DatabaseDriverFactory
+import com.cookiedinner.boxanizer.core.database.DatabaseImporter
+import com.cookiedinner.boxanizer.core.models.DataCounts
 import com.cookiedinner.boxanizer.core.models.ExportSummary
 import com.cookiedinner.boxanizer.database.Box
 import com.cookiedinner.boxanizer.database.BoxWithItem
@@ -29,6 +31,21 @@ class DataProvider(databaseDriverFactory: DatabaseDriverFactory) {
     @Throws(Exception::class)
     fun exportDatabase(target: File): ExportSummary {
         return database.exportTo(target)
+    }
+
+    @Throws(Exception::class)
+    fun getDataCounts(): DataCounts {
+        return database.currentCounts()
+    }
+
+    /**
+     * Replaces all data with the contents of an already validated database [file].
+     */
+    @Throws(Exception::class)
+    fun importDatabase(file: File): DataCounts {
+        return DatabaseImporter.openReadOnly(file).use { source ->
+            database.replaceAllWith(source)
+        }
     }
 
     @Throws(Exception::class)

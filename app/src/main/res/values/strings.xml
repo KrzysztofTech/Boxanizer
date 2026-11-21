@@ -96,4 +96,17 @@
     <string name="export_database_description">Save a full copy of all boxes, items and photos to a file</string>
     <string name="export_database_success">Database exported (boxes: %1$d, items: %2$d)</string>
     <string name="export_database_failed">Failed to export the database</string>
+    <string name="cancel">Cancel</string>
+    <string name="import_database">Import database</string>
+    <string name="import_database_description">Replace all data with a previously exported file</string>
+    <string name="import_confirm_title">Replace all data?</string>
+    <string name="import_confirm_message">The file contains %1$d boxes, %2$d items and %3$d photos.\n\nCurrent data (%4$d boxes, %5$d items) will be replaced. A backup of the current data is saved automatically.</string>
+    <string name="import_action">Import</string>
+    <string name="import_in_progress">Importing…</string>
+    <string name="import_database_success">Database imported (boxes: %1$d, items: %2$d)</string>
+    <string name="import_database_failed">Import failed, current data was not changed</string>
+    <string name="import_error_not_a_database">The chosen file is not a Boxanizer database</string>
+    <string name="import_error_corrupted">The database file is damaged</string>
+    <string name="import_error_newer_version">The file comes from a newer version of the app</string>
+    <string name="import_error_not_enough_space">Not enough free space on the device</string>
 </resources>

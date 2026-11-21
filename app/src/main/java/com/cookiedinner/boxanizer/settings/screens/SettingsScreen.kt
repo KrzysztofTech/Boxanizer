@@ -12,7 +12,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
@@ -31,6 +35,7 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import com.cookiedinner.boxanizer.R
 import com.cookiedinner.boxanizer.core.data.DataStoreManager
+import com.cookiedinner.boxanizer.core.models.ImportCandidate
 import com.cookiedinner.boxanizer.core.utilities.getPackageInfo
 import com.cookiedinner.boxanizer.core.utilities.indexMap
 import com.cookiedinner.boxanizer.core.utilities.koinActivityViewModel
@@ -66,6 +71,21 @@ fun SettingsScreen(
         if (uri != null) viewModel.exportDatabase(uri)
     }
 
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) viewModel.prepareImport(uri)
+    }
+
+    viewModel.importCandidate?.let { candidate ->
+        ImportConfirmationDialog(
+            candidate = candidate,
+            importing = viewModel.importing,
+            onConfirm = viewModel::confirmImport,
+            onDismiss = viewModel::cancelImport
+        )
+    }
+
     SettingsScreenContent(
         currentTheme = currentTheme.value,
         onThemeChoice = {
@@ -98,6 +118,55 @@ fun SettingsScreen(
         },
         exportDatabase = {
             exportLauncher.launch(viewModel.suggestedExportFileName())
+        },
+        importDatabase = {
+            // Exported files may get various MIME types depending on where they are stored
+            importLauncher.launch(arrayOf("*/*"))
+        }
+    )
+}
+
+@Composable
+private fun ImportConfirmationDialog(
+    candidate: ImportCandidate,
+    importing: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { if (!importing) onDismiss() },
+        title = { Text(stringResource(R.string.import_confirm_title)) },
+        text = {
+            if (importing) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    Text(
+                        modifier = Modifier.padding(start = 16.dp),
+                        text = stringResource(R.string.import_in_progress)
+                    )
+                }
+            } else {
+                Text(
+                    stringResource(
+                        R.string.import_confirm_message,
+                        candidate.fileCounts.boxes,
+                        candidate.fileCounts.items,
+                        candidate.fileCounts.photos,
+                        candidate.currentCounts.boxes,
+                        candidate.currentCounts.items
+                    )
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = !importing, onClick = onConfirm) {
+                Text(stringResource(R.string.import_action))
+            }
+        },
+        dismissButton = {
+            TextButton(enabled = !importing, onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
         }
     )
 }
@@ -112,7 +181,8 @@ private fun SettingsScreenContent(
     supportedBarcodes: Set<DataStoreManager.BarcodeTypes>,
     onSupportedBarcodesChanged: (Set<DataStoreManager.BarcodeTypes>?) -> Unit,
     checkForUpdates: () -> Unit,
-    exportDatabase: () -> Unit
+    exportDatabase: () -> Unit,
+    importDatabase: () -> Unit
 ) {
     val context = LocalContext.current
     LazyColumn(
@@ -274,6 +344,12 @@ private fun SettingsScreenContent(
                     description = stringResource(R.string.export_database_description)
                 ) {
                     exportDatabase()
+                }
+                TextPreference(
+                    title = stringResource(R.string.import_database),
+                    description = stringResource(R.string.import_database_description)
+                ) {
+                    importDatabase()
                 }
             }
             PreferenceGroup(title = stringResource(R.string.about)) {

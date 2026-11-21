@@ -17,3 +17,8 @@ INSERT OR REPLACE INTO ItemTag VALUES (:itemId, :name);
 
 delete:
 DELETE FROM ItemTag WHERE itemId = :itemId AND name = :name;
+deleteAll:
+DELETE FROM ItemTag;
+
+importRow:
+INSERT INTO ItemTag(itemId, name) VALUES (?, ?);
