@@ -1,6 +1,11 @@
 package com.cookiedinner.boxanizer.core.database
 
+import android.database.sqlite.SQLiteDatabase
+import android.os.Build
 import app.cash.sqldelight.Query
+import app.cash.sqldelight.db.QueryResult
+import app.cash.sqldelight.db.SqlDriver
+import com.cookiedinner.boxanizer.core.models.ExportSummary
 import com.cookiedinner.boxanizer.database.Box
 import com.cookiedinner.boxanizer.database.BoxWithItem
 import com.cookiedinner.boxanizer.database.BoxanizerDb
@@ -9,15 +14,59 @@ import com.cookiedinner.boxanizer.database.ItemInBox
 import com.cookiedinner.boxanizer.database.ItemTag
 import com.cookiedinner.boxanizer.items.models.ItemAction
 import com.cookiedinner.boxanizer.items.models.ItemForQueryInBox
+import java.io.File
 
 class Database(databaseDriverFactory: DatabaseDriverFactory) {
-    private val database = BoxanizerDb(
-        driver = databaseDriverFactory.createDriver()
-    )
+    private val driver: SqlDriver = databaseDriverFactory.createDriver()
+    private val database = BoxanizerDb(driver = driver)
 
     private val boxQueries = database.boxQueries
     private val itemQueries = database.itemQueries
     private val itemTagQueries = database.itemTagQueries
+
+    /**
+     * Writes a consistent, standalone copy of the whole database into [target]
+     * (including changes still sitting in the WAL file), verifies it and returns row counts.
+     */
+    @Throws(Exception::class)
+    fun exportTo(target: File): ExportSummary {
+        target.delete()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // SQLite >= 3.27 (Android 11+) can produce a consistent copy while the database is open
+            driver.execute(null, "VACUUM INTO ?", 1) {
+                bindString(0, target.absolutePath)
+            }
+        } else {
+            // Older SQLite: move everything from the WAL into the main file, then copy the file
+            driver.executeQuery(null, "PRAGMA wal_checkpoint(TRUNCATE)", { cursor ->
+                while (cursor.next().value) { /* consume the result row */ }
+                QueryResult.Unit
+            }, 0)
+            val mainPath = driver.executeQuery(null, "PRAGMA database_list", { cursor ->
+                var path: String? = null
+                while (cursor.next().value) {
+                    if (cursor.getString(1) == "main") path = cursor.getString(2)
+                }
+                QueryResult.Value(path)
+            }, 0).value ?: throw Exception("Could not determine the database file path")
+            File(mainPath).copyTo(target, overwrite = true)
+        }
+        return verifyExport(target)
+    }
+
+    private fun verifyExport(file: File): ExportSummary {
+        SQLiteDatabase.openDatabase(file.absolutePath, null, SQLiteDatabase.OPEN_READONLY).use { db ->
+            db.rawQuery("PRAGMA integrity_check", null).use { cursor ->
+                if (!cursor.moveToFirst() || cursor.getString(0) != "ok")
+                    throw Exception("Exported database failed the integrity check")
+            }
+            fun count(table: String): Long = db.rawQuery("SELECT COUNT(*) FROM $table", null).use { cursor ->
+                cursor.moveToFirst()
+                cursor.getLong(0)
+            }
+            return ExportSummary(boxes = count("Box"), items = count("Item"))
+        }
+    }
 
     private fun <T : Any> buildListFromQuery(
         searchQuery: String,

@@ -1,6 +1,7 @@
 package com.cookiedinner.boxanizer.settings.viewmodels
 
 import android.app.Application
+import android.net.Uri
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarResult
 import androidx.lifecycle.viewModelScope
@@ -12,11 +13,49 @@ import com.cookiedinner.boxanizer.core.viewmodels.ViewModelWithSnack
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class SettingsViewModel(
     private val context: Application,
     private val dataProvider: DataProvider
 ) : ViewModelWithSnack() {
+    private var exportInProgress = false
+
+    fun suggestedExportFileName(): String {
+        val version = getPackageInfo(context, 0).versionName
+        val date = SimpleDateFormat("yyyy-MM-dd_HH-mm", Locale.US).format(Date())
+        return "boxanizer-$version-$date.db"
+    }
+
+    fun exportDatabase(targetUri: Uri) {
+        if (exportInProgress) return
+        exportInProgress = true
+        viewModelScope.launch(Dispatchers.IO) {
+            val tempFile = File(context.cacheDir, "boxanizer-export.db")
+            try {
+                val summary = dataProvider.exportDatabase(tempFile)
+                val outputStream = context.contentResolver.openOutputStream(targetUri, "w")
+                    ?: throw Exception("Could not open the chosen file for writing")
+                outputStream.use { output ->
+                    tempFile.inputStream().use { input -> input.copyTo(output) }
+                }
+                snackbarHostState.safelyShowSnackbar(
+                    message = context.getString(R.string.export_database_success, summary.boxes, summary.items),
+                    duration = SnackbarDuration.Long
+                )
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+                snackbarHostState.safelyShowSnackbar(context.getString(R.string.export_database_failed))
+            } finally {
+                tempFile.delete()
+                exportInProgress = false
+            }
+        }
+    }
+
     fun checkForUpdates(openBrowserForUrl: (String) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             try {

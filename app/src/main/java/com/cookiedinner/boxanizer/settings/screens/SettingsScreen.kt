@@ -3,6 +3,8 @@ package com.cookiedinner.boxanizer.settings.screens
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -58,6 +60,12 @@ fun SettingsScreen(
         viewModel.setSnackbarHost(mainViewModel.snackbarHostState)
     }
 
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/octet-stream")
+    ) { uri ->
+        if (uri != null) viewModel.exportDatabase(uri)
+    }
+
     SettingsScreenContent(
         currentTheme = currentTheme.value,
         onThemeChoice = {
@@ -87,6 +95,9 @@ fun SettingsScreen(
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(it))
                 context.startActivity(intent)
             }
+        },
+        exportDatabase = {
+            exportLauncher.launch(viewModel.suggestedExportFileName())
         }
     )
 }
@@ -100,7 +111,8 @@ private fun SettingsScreenContent(
     onLanguageClick: (DataStoreManager.LanguageChoice) -> Unit,
     supportedBarcodes: Set<DataStoreManager.BarcodeTypes>,
     onSupportedBarcodesChanged: (Set<DataStoreManager.BarcodeTypes>?) -> Unit,
-    checkForUpdates: () -> Unit
+    checkForUpdates: () -> Unit,
+    exportDatabase: () -> Unit
 ) {
     val context = LocalContext.current
     LazyColumn(
@@ -254,6 +266,14 @@ private fun SettingsScreenContent(
                             }
                         }
                     }
+                }
+            }
+            PreferenceGroup(title = stringResource(R.string.data)) {
+                TextPreference(
+                    title = stringResource(R.string.export_database),
+                    description = stringResource(R.string.export_database_description)
+                ) {
+                    exportDatabase()
                 }
             }
             PreferenceGroup(title = stringResource(R.string.about)) {
