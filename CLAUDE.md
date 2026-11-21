@@ -68,6 +68,7 @@ Build debug działa (2026-11-21, budowany przez „Run” w Android Studio, APK 
 - **Nigdy nie instalować na nim naszych buildów i nie odinstalowywać aplikacji**, bo inny podpis wymaga odinstalowania, a to kasuje dane.
 - **Wniosek:** nasze przyszłe wersje (inny klucz) nie zaktualizują tej aplikacji z zachowaniem danych. Dane trzeba przenieść eksportem i importem albo przez kopię w chmurze Google. Wybór sposobu jest do ustalenia.
 - Usługa kopii zapasowej Androida jest włączona (transport Google), ale **kopia w chmurze nie działa**: `bmgr backupnow` zwraca „Size quota exceeded”, bo dane aplikacji mają około 36,8 MB, a limit Auto Backup to 25 MB (głównie zdjęcia BLOB). Przywracanie z chmury i tak sprawdza podpis, więc nie dałoby pliku `.db`.
+- `adb backup` sprawdzony 2026-11-21: plik pusty (47 B, sam nagłówek), czego można było się spodziewać.
 - Jedyna pewna droga do pliku bazy: kolega buduje wersję z eksportem bazy, podpisaną swoim kluczem (albo przekazuje klucz).
 
 ## Planowane zmiany (w tej kolejności)
