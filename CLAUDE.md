@@ -60,7 +60,7 @@ adb shell am start -n com.cookiedinner.boxanizer/.MainActivity
 .\gradlew.bat verifySqlDelightMigration   # sprawdzenie migracji bazy
 ```
 Build release (`assembleRelease`) ma minifikację, a konfiguracja podpisu jest do ustalenia.
-Te komendy nie zostały jeszcze uruchomione na tej maszynie.
+Build debug działa (2026-11-21, budowany przez „Run” w Android Studio, APK w `app\build\intermediates\apk\debug\`). SDK: `C:\Users\tech\AppData\Local\Android\Sdk`, `adb` w `platform-tools\`. Testowy telefon jest podłączony przez USB.
 
 ## Planowane zmiany (w tej kolejności)
 1. **Synchronizacja stanu między kilkoma urządzeniami przez wspólną bazę.** Technologia (własny serwer, Firebase/Supabase itp.), rozwiązywanie konfliktów i obsługa zdjęć: do ustalenia.
@@ -83,6 +83,8 @@ _Aktualizować na koniec każdej sesji._
 - Utworzony ten plik CLAUDE.md.
 - Fork podpięty jako `origin`, oryginał jako `upstream`. Gałąź `sync-i-notatki` wypchnięta na fork.
 - Przeanalizowany obecny model danych (wnioski w sekcji „Dane” wyżej). Kod bez zmian.
+- Android Studio skonfigurowane (SDK 34), `assembleDebug` przechodzi. Aplikacja działa na testowym telefonie: dodawanie pudełek i skanowanie kodów sprawdzone, a na telefonie są dane testowe.
+- Hasło do GitHuba zmienione.
 
 **Co w toku:**
 - Wybór architektury synchronizacji (etap 1). Czeka na odpowiedzi właściciela:
@@ -93,5 +95,3 @@ _Aktualizować na koniec każdej sesji._
 
 **Następny krok:**
 - Po odpowiedziach: porównanie 2–3 architektur ze zmianami schematu i planem migracji, do akceptacji.
-- Ręczna konfiguracja Android Studio (SDK 34) i pierwszy udany `assembleDebug`. Jeszcze nie zrobione.
-- Właściciel powinien zmienić hasło do GitHuba (wcześniej trafiło do czatu).
