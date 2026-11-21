@@ -71,6 +71,7 @@ Build debug działa (2026-11-21, budowany przez „Run” w Android Studio, APK 
 - `adb backup` sprawdzony 2026-11-21: plik pusty (47 B, sam nagłówek), czego można było się spodziewać.
 - Jedyna pewna droga do pliku bazy: kolega buduje wersję z eksportem bazy, podpisaną swoim kluczem (albo przekazuje klucz).
 - **Gałąź `eksport-bazy`** (od `main`, commit `75b8451`, na forku): Ustawienia → Dane → „Eksportuj bazę danych”, wersja v1.0.3. Przetestowana na telefonie testowym: liczby pudełek i przedmiotów się zgadzają, plik to poprawne SQLite z 4 tabelami. Czeka na podpisany build od kolegi.
+- Sprawdzanie plików bazy: `sqlite3` 3.54.1 z winget. Wywoływać pełną ścieżką `%LOCALAPPDATA%\Microsoft\WinGet\Links\sqlite3.exe`, bo w `PATH` są wcześniej starsze kopie z `C:\android-sdk\platform-tools` i `C:\Program Files\platform-tools`. Zawsze z `-readonly`.
 - Kopie z telefonów: `C:\projekty\Boxanizer-backup\` (poza repo, nigdy nie commitować). Uwaga: w Git Bash przy ścieżkach telefonu używać `MSYS_NO_PATHCONV=1`.
 
 ## Planowane zmiany (w tej kolejności)
