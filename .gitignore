@@ -34,3 +34,7 @@ google-services.json
 
 app/release/
 .DS_Store
+
+# Lokalne notatki Claude Code (dane urządzeń, ścieżki, stan prac)
+CLAUDE.local.md
+.claude/settings.local.json

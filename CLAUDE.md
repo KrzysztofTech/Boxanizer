@@ -28,7 +28,7 @@ Jeden moduł Gradle `:app`, pakiet `com.cookiedinner.boxanizer` w `app/src/main/
   - `BoxItem`: boxId, itemId, amountInBox, amountRemovedFromBox, amountToBuy
   - `ItemTag`: itemId, name
 - Zdjęcia są zapisywane jako BLOB bezpośrednio w bazie.
-- Migracje: `app/src/main/sqldelight/migrations/1–6.sqm`. Schemat referencyjny to `databases/1.db`, a `verifyMigrations = true`. **Nowa zmiana schematu = nowy plik `7.sqm`, …**
+- Migracje: `app/src/main/sqldelight/migrations/1–6.sqm`. Schemat referencyjny to `databases/1.db`, a `verifyMigrations = true`. Obecny schemat to wersja 7 (`PRAGMA user_version`). **Następna zmiana schematu = plik `7.sqm`, który daje schemat w wersji 8 („migracja 8”).**
 - Istnieje zaczątek listy zakupów: `BoxItem.amountToBuy` (akcje CONSUME/BUY) z migracji 6. `Item.itemAmountToBuy` jest martwa: nic jej nie zapisuje, a `Item.insert` (INSERT OR REPLACE) przy edycji przedmiotu zeruje ją.
 - `BoxItem.amountRemovedFromBox` to sama liczba wyjętych/pożyczonych sztuk (akcje BORROW/RETURN), bez informacji kto i kiedy.
 - Odczyty są jednorazowe (bez `Flow`), więc ekrany nie odświeżają się same po zmianie danych.
@@ -41,7 +41,10 @@ Jeden moduł Gradle `:app`, pakiet `com.cookiedinner.boxanizer` w `app/src/main/
 5. Kolejność list opiera się na `rowid` (celowe ponowne wstawianie wiersza). Po synchronizacji trzeba jawnej kolumny do sortowania.
 6. Zdjęcia jako BLOB (JPEG 800 px wysokości, jakość 100) są ciężkie do synchronizacji. Lepiej trzymać je osobno i w bazie mieć tylko odnośnik.
 7. Brak kluczy obcych, kaskady są robione ręcznie w transakcjach.
-- Kopia zapasowa: na razie tylko systemowy backup Androida (`res/xml/backup_rules.xml`, `data_extraction_rules.xml`). Eksport/import w aplikacji: do ustalenia (prawdopodobnie brak).
+- Kopia zapasowa: w `main` tylko systemowy backup Androida, który przy około 37 MB danych przekracza limit 25 MB kopii w chmurze. Eksport bazy jest na gałęzi `eksport-bazy` (v1.0.3). Import jest planowany jako etap 0.
+
+### Przenoszenie danych z wersji kolegi
+Wydania z GitHuba kolegi są podpisane jego kluczem, a nasze buildy innym. Android nie zaktualizuje jego aplikacji naszą z zachowaniem danych: wymaga odinstalowania, które kasuje dane. Dane z jego wersji nie wyjdą też przez `run-as`, `adb backup` ani kopię w chmurze. Jedyna droga to **eksport w podpisanej przez kolegę v1.0.3 i import w naszej wersji**.
 
 ## Technologie
 Kotlin 1.9.21, AGP 8.3.1, Gradle 8.4 (wrapper), JDK 17, compileSdk/targetSdk 34, minSdk 24.
@@ -60,27 +63,23 @@ adb shell am start -n com.cookiedinner.boxanizer/.MainActivity
 .\gradlew.bat verifySqlDelightMigration   # sprawdzenie migracji bazy
 ```
 Build release (`assembleRelease`) ma minifikację, a konfiguracja podpisu jest do ustalenia.
-Build debug działa (2026-11-21, budowany przez „Run” w Android Studio, APK w `app\build\intermediates\apk\debug\`). SDK: `C:\Users\tech\AppData\Local\Android\Sdk`, `adb` w `platform-tools\`. Testowy telefon jest podłączony przez USB.
-
-## Telefon z prawdziwymi danymi (sprawdzone 2026-11-21)
-- OnePlus CPH2043, Android 12, adb serial `JBW4BYOVSO6TRW6H`.
-- Aplikacja **v1.0.2 (versionCode 2), wersja release** pobrana z GitHub Releases kolegi. Podpis jest kluczem kolegi (`b810d190`). Nie jest debuggable, więc `run-as` nie działa. `adb backup` dla targetSdk 34 nie obejmuje danych aplikacji.
-- **Nigdy nie instalować na nim naszych buildów i nie odinstalowywać aplikacji**, bo inny podpis wymaga odinstalowania, a to kasuje dane.
-- **Wniosek:** nasze przyszłe wersje (inny klucz) nie zaktualizują tej aplikacji z zachowaniem danych. Dane trzeba przenieść eksportem i importem albo przez kopię w chmurze Google. Wybór sposobu jest do ustalenia.
-- Usługa kopii zapasowej Androida jest włączona (transport Google), ale **kopia w chmurze nie działa**: `bmgr backupnow` zwraca „Size quota exceeded”, bo dane aplikacji mają około 36,8 MB, a limit Auto Backup to 25 MB (głównie zdjęcia BLOB). Przywracanie z chmury i tak sprawdza podpis, więc nie dałoby pliku `.db`.
-- `adb backup` sprawdzony 2026-11-21: plik pusty (47 B, sam nagłówek), czego można było się spodziewać.
-- Jedyna pewna droga do pliku bazy: kolega buduje wersję z eksportem bazy, podpisaną swoim kluczem (albo przekazuje klucz).
-- **Gałąź `eksport-bazy`** (od `main`, commit `75b8451`, na forku): Ustawienia → Dane → „Eksportuj bazę danych”, wersja v1.0.3. Przetestowana na telefonie testowym: liczby pudełek i przedmiotów się zgadzają, plik to poprawne SQLite z 4 tabelami. Czeka na podpisany build od kolegi.
-- Sprawdzanie plików bazy: `sqlite3` 3.54.1 z winget. Wywoływać pełną ścieżką `%LOCALAPPDATA%\Microsoft\WinGet\Links\sqlite3.exe`, bo w `PATH` są wcześniej starsze kopie z `C:\android-sdk\platform-tools` i `C:\Program Files\platform-tools`. Zawsze z `-readonly`.
-- Kopie z telefonów: `C:\projekty\Boxanizer-backup\` (poza repo, nigdy nie commitować). Uwaga: w Git Bash przy ścieżkach telefonu używać `MSYS_NO_PATHCONV=1`.
+Pliki bazy sprawdzamy narzędziem `sqlite3`, zawsze z `-readonly`. Szczegóły środowiska i urządzeń są w `CLAUDE.local.md` (lokalnie, poza gitem).
 
 ## Planowane zmiany (w tej kolejności)
-1. **Synchronizacja stanu między kilkoma urządzeniami przez wspólną bazę.** Technologia (własny serwer, Firebase/Supabase itp.), rozwiązywanie konfliktów i obsługa zdjęć: do ustalenia.
-2. **Notatki o wypożyczeniach przypisane do pudełka:** zdjęcie osoby, data, co zostało pożyczone. Szczegółowy model danych (np. data zwrotu): do ustalenia.
-3. **Lista zakupów z ceną, dostawcą i przypomnieniami o uzupełnieniu stanu.** Punktem wyjścia są istniejące kolumny `amountToBuy`/`itemAmountToBuy`. Mechanizm przypomnień (np. WorkManager z powiadomieniami) i progi: do ustalenia.
+0. **Import bazy z eksportu** (`boxanizer.db` ze schematem ≤ 7) do naszej wersji. To warunek przeniesienia prawdziwych danych (około 37 MB, głównie zdjęcia). Musi być gotowy **przed** jakąkolwiek migracją schematu. Plan czeka na akceptację.
+1. **Synchronizacja między urządzeniami.** Wstępne kierunki, **do omówienia**:
+   - Serwer: PocketBase na Debianie, dostęp przez Tailscale.
+   - **Offline-first:** lokalna baza SQLite zostaje podstawą, a synchronizacja działa w tle.
+   - **Model hybrydowy:** katalog (pudełka, przedmioty, tagi) ma UUID, `updatedAt` i znaczniki usunięcia. Zmiany ilości są zapisywane jako operacje (delty), a nie gotowe wyniki.
+   - **Zdjęcia:** jako osobne pliki JPEG (jakość około 80), poza bazą.
+   - Migrację 8 (UUID i inne) testujemy na **kopii prawdziwych danych**, nie tylko na testowych.
+2. **Notatki o wypożyczeniach przypisane do pudełka:** zdjęcie osoby, data, co zostało pożyczone. Model danych (np. data zwrotu): do ustalenia.
+3. **Lista zakupów z ceną, dostawcą i przypomnieniami o uzupełnieniu stanu.** Punktem wyjścia jest `BoxItem.amountToBuy`. Przypomnienia (np. WorkManager) i progi: do ustalenia.
 
 ## Zasady pracy
-- Pracujemy na gałęzi **`sync-i-notatki`**.
+- Pracujemy na gałęzi **`sync-i-notatki`**. Gałąź `eksport-bazy` (od `main`) to mała zmiana dla kolegi do podpisanego buildu v1.0.3. Nie dodawać do niej nic innego.
+- **Repo jest publiczne.** Nie commitować numerów seryjnych urządzeń, ścieżek z nazwą użytkownika, informacji o kontach ani danych użytkownika. To trafia do `CLAUDE.local.md`.
+- **Na telefonie z prawdziwymi danymi nie instalować naszych buildów i nie odinstalowywać aplikacji**, dopóki nie ma zweryfikowanej kopii bazy na komputerze.
 - **Przed każdą większą zmianą pokaż plan i poczekaj na zgodę.**
 - **Nie zmieniaj formatu bazy bez kopii zapasowej i migracji danych.** Zmiana schematu wymaga nowego pliku `.sqm`, przejścia `verifySqlDelightMigration` i wcześniejszej kopii danych użytkownika.
 - **Po każdym etapie: commit i push na fork.**
@@ -88,26 +87,4 @@ Build debug działa (2026-11-21, budowany przez „Run” w Android Studio, APK 
 - Remote'y: `origin` to fork https://github.com/KrzysztofTech/Boxanizer.git (tu pushujemy), a `upstream` to oryginał kolegi https://github.com/CookieDinner/Boxanizer.git (tylko fetch, **nigdy push**).
 
 ## Stan prac
-_Aktualizować na koniec każdej sesji._
-
-**Co zrobione** (2026-11-21):
-- Środowisko: Git 2.56.1, Temurin JDK 17.0.21, Android Studio 2026.2.2.9 (zainstalowane przez winget).
-- Repozytorium sklonowane do `C:\projekty\Boxanizer`, utworzona gałąź `sync-i-notatki` (z `main` @ `504ade2`).
-- Utworzony ten plik CLAUDE.md.
-- Fork podpięty jako `origin`, oryginał jako `upstream`. Gałąź `sync-i-notatki` wypchnięta na fork.
-- Przeanalizowany obecny model danych (wnioski w sekcji „Dane” wyżej). Kod bez zmian.
-- Android Studio skonfigurowane (SDK 34), `assembleDebug` przechodzi. Aplikacja działa na testowym telefonie: dodawanie pudełek i skanowanie kodów sprawdzone, a na telefonie są dane testowe.
-- Hasło do GitHuba zmienione.
-- Próby kopii z prawdziwego telefonu (`run-as`, chmura Google, `adb backup`) nieudane. Zrobiona i przetestowana funkcja eksportu na gałęzi `eksport-bazy`.
-
-**Czeka na kolegę:** podpisany build v1.0.3 z gałęzi `eksport-bazy`. Potem instalacja na prawdziwym telefonie i eksport bazy do `Boxanizer-backup\`.
-
-**Co w toku:**
-- Wybór architektury synchronizacji (etap 1). Czeka na odpowiedzi właściciela:
-  - Czy dane zmieniają tylko jego urządzenia, czy kilka osób jednocześnie?
-  - Czy aplikacja ma w pełni działać offline i synchronizować się później?
-  - Gotowa usługa (Firebase/Supabase) czy własny serwer?
-  - Czy zdjęcia mają się synchronizować w pełnej jakości?
-
-**Następny krok:**
-- Po odpowiedziach: porównanie 2–3 architektur ze zmianami schematu i planem migracji, do akceptacji.
+Prowadzony w `CLAUDE.local.md` (lokalnie, poza gitem). Aktualizować na koniec każdej sesji.
