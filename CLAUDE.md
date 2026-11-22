@@ -77,6 +77,7 @@ Pliki bazy sprawdzamy narzędziem `sqlite3`, zawsze z `-readonly`. Szczegóły �
 3. **Lista zakupów z ceną, dostawcą i przypomnieniami o uzupełnieniu stanu.** Punktem wyjścia jest `BoxItem.amountToBuy`. Przypomnienia (np. WorkManager) i progi: do ustalenia.
 
 ## Zasady pracy
+- **Zawsze odpowiadaj po polsku.**
 - Pracujemy na gałęzi **`sync-i-notatki`**. Gałąź `eksport-bazy` (od `main`) to mała zmiana dla kolegi do podpisanego buildu v1.0.3. Nie dodawać do niej nic innego.
 - **Repo jest publiczne.** Nie commitować numerów seryjnych urządzeń, ścieżek z nazwą użytkownika, informacji o kontach ani danych użytkownika. To trafia do `CLAUDE.local.md`.
 - **Na telefonie z prawdziwymi danymi nie instalować naszych buildów i nie odinstalowywać aplikacji**, dopóki nie ma zweryfikowanej kopii bazy na komputerze.
