@@ -55,10 +55,12 @@ class DataStoreManager(private val context: Context) {
         FORMAT_DATA_MATRIX("Data Matrix", Barcode.FORMAT_DATA_MATRIX)
     }
 
-    @Composable
-    fun collectThemeWithLifecycle() = dataStore.data.map { preferences ->
+    private val themeFlow = dataStore.data.map { preferences ->
         ThemeChoice.entries[preferences[themeKey] ?: 0]
-    }.collectAsStateWithLifecycle(initialValue = ThemeChoice.SYSTEM)
+    }
+
+    @Composable
+    fun collectThemeWithLifecycle() = themeFlow.collectAsStateWithLifecycle(initialValue = ThemeChoice.SYSTEM)
 
     suspend fun switchTheme(newTheme: ThemeChoice) {
         dataStore.edit { preferences ->
@@ -66,10 +68,12 @@ class DataStoreManager(private val context: Context) {
         }
     }
 
-    @Composable
-    fun collectDynamicThemeWithLifecycle() = dataStore.data.map { preferences ->
+    private val dynamicThemeFlow = dataStore.data.map { preferences ->
         preferences[dynamicThemeKey] ?: false
-    }.collectAsStateWithLifecycle(initialValue = false)
+    }
+
+    @Composable
+    fun collectDynamicThemeWithLifecycle() = dynamicThemeFlow.collectAsStateWithLifecycle(initialValue = false)
 
     suspend fun switchDynamicTheme() {
         dataStore.edit { preferences ->
@@ -91,10 +95,12 @@ class DataStoreManager(private val context: Context) {
         }
     }
 
-    @Composable
-    fun collectBarcodeTypesWithLifecycle() = dataStore.data.map { preferences ->
+    private val barcodeTypesFlow = dataStore.data.map { preferences ->
         preferences[barcodesKey]?.map { enumValueOf<BarcodeTypes>(it) }?.toSet() ?: BarcodeTypes.entries.toSet()
-    }.collectAsStateWithLifecycle(initialValue = emptySet())
+    }
+
+    @Composable
+    fun collectBarcodeTypesWithLifecycle() = barcodeTypesFlow.collectAsStateWithLifecycle(initialValue = emptySet())
 
     suspend fun changeBarcodeTypes(barcodes: Set<BarcodeTypes>?) {
         dataStore.edit { preferences ->
